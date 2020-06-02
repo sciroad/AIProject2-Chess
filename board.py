@@ -1,8 +1,20 @@
 capitalKingPosition = 60
 lowerKingPosition = 4
-kingMoved = False
-leftRookMoved = False
-rightRookMoved = False
+capitalLeftRook = 56
+capitalRightRook = 63
+lowerLeftRook = 0
+lowerRightRook = 7
+# Left Rook, King , Right Rook  moved before ?
+castlingState = [[0, 0, 0], [0, 0, 0]]
+# kingMoved = False
+# leftRookMoved = False
+# rightRookMoved = False
+# blackKingMoved = False
+# blackLeftRookMoved = False
+# blackRightRookMoved = False
+# blackKingMoved = False
+# blackLeftRookMoved = False
+# blackRightRookMoved = False
 chessBoard = [["r", "n", "b", "q", "k", "b", "n", "r"],
               ["p", "p", "p", "p", "p", "p", "p", "p"],
               [" ", " ", " ", " ", " ", " ", " ", " "],
@@ -11,7 +23,6 @@ chessBoard = [["r", "n", "b", "q", "k", "b", "n", "r"],
               [" ", " ", " ", " ", " ", " ", " ", " "],
               ["P", "P", "P", "P", "P", "P", "P", "P"],
               ["R", "N", "B", "Q", "K", "B", "N", "R"]]
-
 pawnWhite = [[0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0],
              [5.0,  5.0,  5.0,  5.0,  5.0,  5.0,  5.0,  5.0],
              [1.0,  1.0,  2.0,  3.0,  3.0,  2.0,  1.0,  1.0],
@@ -92,14 +103,14 @@ def possibleMoves():
             moves += possibleR(i)
         elif(piece == "P"):
             moves += possibleP(i)
-
+    if((castlingState[0][1] == 0 and castlingState[0][2] == 0) or (castlingState[0][1] == 0 and castlingState[0][0] == 0)):
+        moves += possibleCastling()
     return moves
 
 # move+=str(r)+str(c)+str((r+i))+str((c+j))+oldPiece
-# y1 x1 y2 x2 {oldPiece} ödüllü ise
 
 
-def possibleK(position):  # working perfect
+def possibleK(position):  # working 
     move = ""
     r = position//8
     c = position % 8
@@ -135,7 +146,7 @@ def possibleK(position):  # working perfect
     return move
 
 
-def possibleB(position):  # working perfect
+def possibleB(position):  # working 
     move = ""
     r = position//8
     c = position % 8
@@ -166,7 +177,7 @@ def possibleB(position):  # working perfect
     return move
 
 
-def possibleN(position):  # working perfect
+def possibleN(position):  # working 
     move = ""
     r = position//8
     c = position % 8
@@ -205,7 +216,7 @@ def possibleN(position):  # working perfect
     return move
 
 
-def possibleQ(position):  # working perfect
+def possibleQ(position):  # working 
     move = ""
     r = position//8
     c = position % 8
@@ -238,7 +249,7 @@ def possibleQ(position):  # working perfect
     return move
 
 
-def possibleR(position):  # working perfect
+def possibleR(position):  # working 
     move = ""
     r = position//8
     c = position % 8
@@ -280,8 +291,9 @@ def possibleR(position):  # working perfect
             pass
         counter = 1
     return move
-# x1 x2 {oldPiece} {newPiece} {P}
 
+
+# x1 x2 {oldPiece} {newPiece} {P}
 
 def possibleP(position):
     move = ""
@@ -378,14 +390,37 @@ def possibleP(position):
     # if(r==1): #sağ çapraz ödüllü
     return move
 
-def checkLeftRook(position):
+# L(eft)---C(astling)
+# R(right)---C(astling)
 
 
+def possibleCastling():
+    move = ""
+    global capitalKingPosition
+    if(not (kingSafe())):
 
-    return False
+        return move
+    else:
+        if(castlingState[0][1] == 0 and castlingState[0][2] == 0):
+            capitalKingPosition += 1
+            if(kingSafe()):
+                capitalKingPosition += 1
+                if(kingSafe()):
+                    if(chessBoard[7][5] == " " and chessBoard[7][6] == " "):
+                        move += "R---C"
+                capitalKingPosition -= 1
+            capitalKingPosition -= 1
+        if(castlingState[0][1] == 0 and castlingState[0][0] == 0):
+            capitalKingPosition -= 1
+            if(kingSafe()):
+                capitalKingPosition -= 1
+                if(kingSafe()):
+                    if(chessBoard[7][3] == " " and chessBoard[7][2] == " " and chessBoard[7][1] == " "):
+                        move += "L---C"
+                capitalKingPosition += 1
+            capitalKingPosition += 1
 
-def checkRightRook(position):
-    
+    return move
 
 
 def kingSafe():
@@ -470,17 +505,22 @@ def kingSafe():
     return True
 
 
-def boardPrinter(chessBoard):
-    for i in range(0, 8):
-        print(chessBoard[i])
+def checkMate():
+    if(not kingSafe()):
+        moves = possibleMoves()
+        return (moves == "")
+    return False
 
-# flip board and evaluate
 
-# Calculate the score for each piece
+def draw():
+    if(kingSafe()):
+        moves = possibleMoves()
+        return (moves == "")
+    return False
 
 
 def flipTheBoard():
-    global chessBoard
+    global chessBoard, capitalKingPosition, lowerKingPosition, castlingState, capitalLeftRook, capitalRightRook, lowerLeftRook, lowerRightRook
     for i in range(0, 64):
         r = i//8
         c = i % 8
@@ -495,6 +535,28 @@ def flipTheBoard():
     #     chessBoard[7-r][7-c] = chessBoard[r][c]
     #     chessBoard[r][c] = temp
     chessBoard = chessBoard[::-1]
+    castlingState = castlingState[::-1]
+
+    # Kings new positions
+    rc, cc, rl, cl = capitalKingPosition//8, capitalKingPosition % 8, lowerKingPosition//8, lowerKingPosition % 8
+    capitalKingPosition, lowerKingPosition = ((7-rl)*8)+cl, ((7-rc)*8)+cc
+    # Rooks new positions
+    clrr, clrc, crrr, crrc, llrr, llrc, lrrr, lrrc = capitalLeftRook//8, capitalLeftRook % 8, capitalRightRook//8, capitalRightRook % 8, lowerLeftRook//8, lowerLeftRook % 8, lowerRightRook//8, lowerRightRook % 8
+    capitalLeftRook, capitalRightRook, lowerLeftRook, lowerRightRook = (
+        (7-clrr)*8)+clrc, ((7-crrr)*8)+crrc, ((7-llrr)*8)+llrc, ((7-lrrr)*8)+lrrc
+
+
+def boardPrinter(chessBoard):
+
+    for i in range(0, 8):
+        print((8-i), " ", end="")
+        print(chessBoard[i])
+    print("     A    B    C    D    E    F    G    H")
+# flip board and evaluate
+
+# Calculate the score for each piece
+
+# check this method whether working correct or wrong
 
 
 def calculateScore():
